@@ -6,9 +6,21 @@
         {% else %}
         <title>Welcome to my flask app</title>
         {% endif %}
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/base.css') }}">
     </head>
     <body>
-        <div><a href="/index">Home</a></div>
+        <div class="container">
+            <nav>
+                <ul>
+                  <li>
+                    <a href="{{ url_for('index') }}">Home</a>
+                  </li>
+                  <li>
+                    <a href="{{ url_for('about') }}">About</a>
+                  </li>
+                </ul>
+            </nav>
+        </div>
         <hr>
         {% block content %}{% endblock %}
     </body>

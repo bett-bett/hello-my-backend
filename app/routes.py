@@ -16,3 +16,7 @@ def index():
       }
   ]
   return render_template('index.html', title='Home', user=user, items=items)
+
+@app.route('/about')
+def about():
+    return render_template('index.html', content='Flask web app.')
