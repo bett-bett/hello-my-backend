@@ -12,6 +12,9 @@
 
 body {
   margin: 20px;
+  border: 1px solid #727578;
+  padding: 10px;
+
 }
 
 nav ul {
