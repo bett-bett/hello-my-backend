@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}{{ note.title if note else "New Note" }}{% endblock %}
+
+{% block content %}
+  <h2>{{ note.title if note else "Create New Note" }}</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <p>
+      {{ form.title.label }}<br>
+      {{ form.title(size=80) }}
+      {% for error in form.title.errors %}
+        <span style="color:red;">{{ error }}</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.content.label }}<br>
+      {{ form.content(rows=10, cols=80) }}
+      {% for error in form.content.errors %}
+        <span style="color:red;">{{ error }}</span>
+      {% endfor %}
+    </p>
+    <p>{{ form.submit() }}</p>
+  </form>
+  <a href="{{ url_for('main.list_notes') }}">Back to Notes</a>
+{% endblock %}

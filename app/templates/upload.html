@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Markdown Files{% endblock %}
+
+{% block content %}
+  <h2>Upload Markdown Files</h2>
+  <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.files.label }}<br>
+      {{ form.files(id="files") }}
+      {% for error in form.files.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+      {% endfor %}
+    </div>
+    <div id="preview-container" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
+      <em>Select file(s) to preview their contents here...</em>
+    </div>
+    <div style="margin-top: 20px;">
+      {{ form.submit() }}
+    </div>
+  </form>
+
+  <script>
+    document.getElementById('files').addEventListener('change', function(event) {
+      const previewContainer = document.getElementById('preview-container');
+      previewContainer.innerHTML = ''; 
+      const files = event.target.files;
+      
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const filePreview = document.createElement('div');
+          filePreview.style.marginBottom = '20px';
+
+
+          const heading = document.createElement('h3');
+          heading.textContent = file.name;
+          filePreview.appendChild(heading);
+
+          const pre = document.createElement('pre');
+          pre.textContent = e.target.result;
+          filePreview.appendChild(pre);
+
+          previewContainer.appendChild(filePreview);
+
+          const hr = document.createElement('hr');
+          previewContainer.appendChild(hr);
+
+        };
+        reader.readAsText(file);
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}My Notes{% endblock %}
+
+{% block content %}
+  <h2>My Notes</h2>
+  <a href="{{ url_for('main.upload') }}">Create New Note</a>
+  <ul>
+    {% for note in notes %}
+      <li>
+        <a href="{{ url_for('main.note_detail', note_id=note.id) }}">{{ note.title }}</a>
+        ( <a href="{{ url_for('main.edit_note', note_id=note.id) }}">Edit</a> )
+        <form method="POST" action="{{ url_for('main.delete_note', note_id=note.id) }}" style="display:inline;">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

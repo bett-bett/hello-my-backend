@@ -1,12 +1,13 @@
 import click
-from app import app
+from flask import Blueprint
+bp = Blueprint('cli', __name__, cli_group=None)
 
-@app.cli.command("ping")
+@bp.cli.command("ping")
 def ping():
     """ping"""
     click.echo("Pong!")
 
-@app.cli.command("hello")
+@bp.cli.command("hello")
 @click.option("--name", default="World", help="Name to greet")
 def greet_command(name):
     """Greets user by name. `flask greet --name=name`"""
