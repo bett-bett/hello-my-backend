@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 import sqlalchemy as sa
 from app.main import bp
 from app import db
-from app.models import User, Note
+from app.models import User, Note, Tag
 from app.forms import EditProfileForm, MarkdownUploadForm, NoteForm
 from datetime import datetime, timezone
 
@@ -79,8 +79,7 @@ def upload():
     form = MarkdownUploadForm()
     if form.validate_on_submit():
         files = request.files.getlist('files')
-        new_notes = []
-        
+
         for file in files:
             if file:
                 try:
@@ -89,21 +88,85 @@ def upload():
                     flash(f"Error reading file {file.filename}: {e}")
                     continue
                 
+                # notes
+                # get title from filename
+                # don't worry, we have form validators, address your concerns there
                 title = file.filename.rsplit('.', 1)[0]
                 
-                note = Note(
-                    title=title,
-                    content=content,
-                    filename=file.filename,
-                    user_id=current_user.id
-                )
-                db.session.add(note)
-        
+                existing_note = Note.query.filter_by(title=title).first()
+                if existing_note:
+                    existing_note.content = content
+                    existing_note.filename = file.filename
+                    # since we have the first existing note from the db, can we let user compare and edit?
+                    flash(f'Updated existing note: {title}')
+
+                else: 
+                
+                    note = Note(
+                        title=title,
+                        content=content,
+                        filename=file.filename,
+                        user_id=current_user.id
+                    )
+                    db.session.add(note)
+                    db.session.flush()
+                    flash(f'Created new note: {title}')
+
+                    # tags
+                    process_wikilinks(note)
         db.session.commit()
+
+
         flash('Files uploaded and saved to the database successfully.')
         return redirect(url_for('main.upload'))
     return render_template('upload.html', form=form)
+def process_wikilinks(note):
+    import re
+    
+    # - Basic: [[Note Title]]
+    # - With alias: [[Note Title|Alias]]
+    # - With headers: [[Note Title#Header]]
+    # - With block references: [[Note Title^block-id]]
+    # jeez
+    wikilink_pattern = r'\[\[(.*?)(?:\|.*?)?(?:#.*?)?(?:\^.*?)?\]\]'
+    
+    wikilinks = re.findall(wikilink_pattern, note.content)
+    
+    # Remove duplicates by converting to a set and back to list
+    unique_wikilinks = list(set(wikilinks))
 
+
+    existing_tags = Tag.query.filter(Tag.name.in_(unique_wikilinks)).all()
+    existing_tags_map = {tag.name: tag for tag in existing_tags} 
+
+    new_tags = []
+    for name in unique_wikilinks:
+        if name not in existing_tags_map:
+            tag = Tag(name=name)
+            new_tags.append(tag)
+            existing_tags_map[name] = tag
+
+    if new_tags:
+        db.session.add_all(new_tags)
+        db.session.flush()  # Ensure IDs are assigned
+
+    tags = []
+    for name in unique_wikilinks:
+        tag = Tag.query.filter_by(name=name).first()  # Check if tag already exists
+        if not tag:
+            tag = Tag(name=name)
+            db.session.add(tag)
+            db.session.flush()  # Ensure it gets an ID
+        tags.append(tag)  # Append the existing or new tag
+
+
+
+    note.tags.update(tags)  # Associate tags with the note
+
+    db.session.commit()
+    flash(f'Created new connections')
+
+    
 @bp.route('/notes/<int:note_id>/delete', methods=['POST'])
 @login_required
 def delete_note(note_id):
