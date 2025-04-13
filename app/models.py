@@ -15,12 +15,6 @@ note_tags = Table(
     Column('tag_id', Integer, ForeignKey('tags.id'), primary_key=True)
 )
 
-tag_connections = Table(
-    'tag_connections',
-    db.metadata,
-    Column('source_id', Integer, ForeignKey('tags.id'), primary_key=True),
-    Column('target_id', Integer, ForeignKey('tags.id'), primary_key=True)
-)
 
 
 class User(UserMixin, db.Model):
@@ -77,14 +71,6 @@ class Tag(db.Model):
         collection_class=set
     )
     
-    connected_to: Mapped[List["Tag"]] = relationship(
-        secondary=tag_connections,
-        primaryjoin=(tag_connections.c.source_id == id),
-        secondaryjoin=(tag_connections.c.target_id == id),
-        collection_class=set,
-        backref="connected_from"
-    )
-
 
 @login.user_loader
 def load_user(id):
