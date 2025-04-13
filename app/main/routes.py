@@ -1,8 +1,8 @@
-
 from urllib.parse import urlsplit
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_required
 import sqlalchemy as sa
+from sqlalchemy.orm import joinedload
 from app.main import bp
 from app import db
 from app.models import User, Note, Tag
@@ -68,9 +68,21 @@ def edit_profile():
 @bp.route('/notes')
 @login_required
 def list_notes():
-    notes = db.session.execute(db.select(Note).where(Note.user_id == current_user.id)).scalars()
+    # Eager load users and tags to avoid N+1 queries
+    all_notes = db.session.execute(
+        db.select(Note)
+        .options(joinedload(Note.tags), joinedload(Note.user))
+        .order_by(Note.created_at.desc())
+    ).unique().scalars().all()
     
-    return render_template('notes_list.html', notes=notes)
+    notes_grouped_by_user = {}
+    for note in all_notes:
+        user = note.user
+        if user not in notes_grouped_by_user:
+            notes_grouped_by_user[user] = []
+        notes_grouped_by_user[user].append(note)
+
+    return render_template('notes_list.html', notes_by_user=notes_grouped_by_user)
 
 
 @bp.route('/notes/new', methods=['GET', 'POST'])

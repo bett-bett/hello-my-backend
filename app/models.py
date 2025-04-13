@@ -55,6 +55,7 @@ class Note(db.Model):
     updated_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc),onupdate=lambda: datetime.now(timezone.utc))
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id), index=True)
     
+    user: Mapped[User] = relationship("User", backref="notes")
     tags: Mapped[List["Tag"]] = relationship("Tag", secondary=note_tags, back_populates="notes", collection_class=set)
     
 
